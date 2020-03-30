@@ -1,20 +1,58 @@
 const server = require("http").createServer();
 const io = require("socket.io")(server);
 
-const games = [];
+const MongoClient = require("mongodb").MongoClient;
+const assert = require("assert");
+
+// Connection URL
+const url = "mongodb://localhost:27017";
+
+// Database Name
+const dbName = "myproject";
+
+const saveNewGame = (game, socket) =>
+  MongoClient.connect(url, function(err, client) {
+    assert.equal(null, err);
+    console.log("Connected successfully to server");
+
+    const db = client.db(dbName);
+    // Get the games collection
+    const collection = db.collection("games");
+
+    // Insert some games
+    collection.insertOne(game, {}, () => {
+      console.log("Inserted 1 game into the collection");
+      pushGames(socket);
+    });
+    client.close();
+  });
+
+const pushGames = socket =>
+  MongoClient.connect(url, function(err, client) {
+    assert.equal(null, err);
+    console.log("Connected successfully to server");
+
+    const db = client.db(dbName);
+    // Get the games collection
+    const collection = db.collection("games");
+    // Find some documents
+    collection.find({}).toArray(function(err, games) {
+      assert.equal(err, null);
+      console.log("Found the records");
+      socket.emit("pushGames", games);
+    });
+    client.close();
+  });
 
 io.on("connection", function(socket) {
-  // connect / disconnect
-  socket.emit("pushGames", games);
+  pushGames(socket);
   console.log("a user connected");
   socket.on("disconnect", function() {
     console.log("user disconnected");
   });
 
-  socket.on("addGame", function(name) {
-    games.push({ name, players: [], status: "draft" });
-    console.log("new game", name);
-    io.emit("pushGames", games);
+  socket.on("addGame", name => {
+    saveNewGame({ name, players: [], status: "draft" }, socket);
   });
 });
 

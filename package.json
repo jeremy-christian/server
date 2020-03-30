@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "assert": "^2.0.0",
     "client-manager": "^0.0.2-3",
+    "mongodb": "^3.5.5",
     "socket.io": "^2.3.0",
     "websocket": "^1.0.31"
   },
