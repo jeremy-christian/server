@@ -51,8 +51,11 @@ io.on("connection", function(socket) {
     console.log("user disconnected");
   });
 
-  socket.on("addGame", name => {
-    saveNewGame({ name, players: [], status: "draft" }, socket);
+  socket.on("addGame", ({ name, user: { email } }) => {
+    saveNewGame(
+      { name, players: [email], status: "draft", owner: email },
+      socket
+    );
   });
 });
 
